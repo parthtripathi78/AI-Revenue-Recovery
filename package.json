@@ -1,0 +1,28 @@
+{
+  "name": "ai-revenue-recovery",
+  "version": "1.0.0",
+  "description": "AI-powered revenue recovery agent — detect, diagnose, and recover lost revenue across payment failures, checkout abandonment, subscription dunning, B2B receivables, and mandate retries.",
+  "main": "index.html",
+  "scripts": {
+    "start": "npx serve . -p 3000",
+    "dev": "npx serve . -p 3000"
+  },
+  "keywords": [
+    "revenue-recovery",
+    "ai-agent",
+    "payment-failure",
+    "dunning",
+    "checkout-abandonment",
+    "b2b-receivables",
+    "fintech",
+    "saas"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "serve": "^14.2.3"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}

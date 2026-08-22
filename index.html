@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Revenue Recovery Agent | Detect · Diagnose · Recover</title>
+  <meta name="description" content="AI-powered revenue recovery agent that detects payment failures, checkout abandonment, subscription failures, and B2B overdue invoices — and automatically recovers them." />
+  <meta name="keywords" content="revenue recovery, AI agent, payment failure, dunning, checkout abandonment, B2B receivables" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="AI Revenue Recovery Agent" />
+  <meta property="og:description" content="Detect revenue at risk and win it back with AI-driven recovery workflows." />
+  <meta property="og:type" content="website" />
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="styles/main.css" />
+</head>
+<body>
+
+<div class="app-wrapper">
+
+  <!-- ── Sidebar ─────────────────────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <a class="logo-mark" href="#">
+        <div class="logo-icon">💰</div>
+        <div class="logo-text">
+          <span class="logo-name">ReviveAI</span>
+          <span class="logo-tagline">Revenue Recovery</span>
+        </div>
+      </a>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-label">Recovery</div>
+      <div class="nav-item active" onclick="switchTab('dashboard')" data-tab="dashboard">
+        <span class="nav-icon">📊</span> Dashboard
+      </div>
+      <div class="nav-item" onclick="switchTab('records')" data-tab="records">
+        <span class="nav-icon">📋</span> At-Risk Records
+      </div>
+      <div class="nav-item" onclick="switchTab('audit')" data-tab="audit">
+        <span class="nav-icon">🔍</span> Audit Trail
+      </div>
+
+      <div class="nav-label" style="margin-top:8px">Channels</div>
+      <div class="nav-item" style="cursor:default">
+        <span class="nav-icon">💳</span> Payment Failures
+      </div>
+      <div class="nav-item" style="cursor:default">
+        <span class="nav-icon">🛒</span> Checkout Recovery
+      </div>
+      <div class="nav-item" style="cursor:default">
+        <span class="nav-icon">🔄</span> Subscription Dunning
+      </div>
+      <div class="nav-item" style="cursor:default">
+        <span class="nav-icon">📋</span> B2B Receivables
+      </div>
+      <div class="nav-item" style="cursor:default">
+        <span class="nav-icon">🏦</span> Mandate Retry
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="agent-status">
+        <div class="status-dot"></div>
+        Agent Active · v1.0.0
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── Main ───────────────────────────────────────────────────────────── -->
+  <main class="main-content">
+
+    <!-- Tab Bar -->
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="dashboard" onclick="switchTab('dashboard')">📊 Dashboard</button>
+      <button class="tab-btn" data-tab="records" onclick="switchTab('records')">📋 Records</button>
+      <button class="tab-btn" data-tab="audit" onclick="switchTab('audit')">🔍 Audit Trail</button>
+    </div>
+
+    <!-- ═══════ DASHBOARD TAB ═══════ -->
+    <div class="tab-content active" id="tab-dashboard">
+
+      <!-- Page Header -->
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1>AI Revenue Recovery Agent</h1>
+          <p>Detect · Diagnose · Recover — across payment, subscription, checkout & B2B failures</p>
+        </div>
+        <div class="header-actions">
+          <button id="stop-btn" class="btn btn-danger" onclick="stopBatch()" disabled>⏹ Stop</button>
+          <button id="pause-btn" class="btn btn-warning" onclick="pauseBatch()" disabled>⏸ Pause</button>
+          <button id="run-btn" class="btn btn-primary" onclick="runBatch()">▶ Run Batch (50)</button>
+        </div>
+      </div>
+
+      <!-- Metric Cards -->
+      <div class="metrics-grid">
+        <div class="metric-card card-risk">
+          <div class="metric-icon">⚠️</div>
+          <div class="metric-label">Total at Risk</div>
+          <div class="metric-value" id="metric-at-risk">—</div>
+          <div class="metric-sub">Across all failure types</div>
+        </div>
+        <div class="metric-card card-rec">
+          <div class="metric-icon">✅</div>
+          <div class="metric-label">Recovered</div>
+          <div class="metric-value" id="metric-recovered">₹0</div>
+          <div class="metric-sub">Net revenue won back</div>
+        </div>
+        <div class="metric-card card-lost">
+          <div class="metric-icon">❌</div>
+          <div class="metric-label">Written Off</div>
+          <div class="metric-value" id="metric-lost">₹0</div>
+          <div class="metric-sub">After max retries</div>
+        </div>
+        <div class="metric-card card-rate">
+          <div class="metric-icon">📈</div>
+          <div class="metric-label">Recovery Rate</div>
+          <div class="metric-value" id="metric-rate">0%</div>
+          <div class="metric-sub">% of at-risk recovered</div>
+        </div>
+      </div>
+
+      <!-- Status Bar -->
+      <div class="status-bar">
+        <div class="status-bar-top">
+          <div class="status-counts">
+            <div class="sc-item"><div class="sc-dot pending"></div> Pending: <strong id="cnt-pending">—</strong></div>
+            <div class="sc-item"><div class="sc-dot progress"></div> In Progress: <strong id="cnt-progress">—</strong></div>
+            <div class="sc-item"><div class="sc-dot recovered"></div> Recovered: <strong id="cnt-recovered">—</strong></div>
+            <div class="sc-item"><div class="sc-dot failed"></div> Failed: <strong id="cnt-failed">—</strong></div>
+            <div class="sc-item"><div class="sc-dot escalated"></div> Escalated: <strong id="cnt-escalated">—</strong></div>
+            <div class="sc-item"><div class="sc-dot dnc"></div> DNC: <strong id="cnt-dnc">—</strong></div>
+          </div>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar-fill" id="batch-progress-bar"></div>
+        </div>
+        <div class="progress-text" id="batch-progress-text">Click "Run Batch" to start recovery</div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="charts-grid">
+        <div class="chart-card">
+          <h3>📊 Recovery Breakdown</h3>
+          <div class="chart-canvas-wrap">
+            <canvas id="recoveryDonut"></canvas>
+          </div>
+        </div>
+        <div class="chart-card">
+          <h3>💸 At Risk vs Recovered by Channel (₹ Lakhs)</h3>
+          <div class="chart-canvas-wrap">
+            <canvas id="channelBar"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Row -->
+      <div class="bottom-row">
+        <div class="log-panel">
+          <h3>⚡ Live Agent Log</h3>
+          <div id="live-log"></div>
+        </div>
+        <div class="curve-panel">
+          <h3>📈 Cumulative Recovery Curve</h3>
+          <div class="chart-canvas-wrap">
+            <canvas id="recoveryCurve"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- How It Works -->
+      <div class="how-it-works">
+        <h3>🤖 How the Agent Works</h3>
+        <div class="workflow-steps">
+          <div class="workflow-step step-1">
+            <div class="step-icon">🔍</div>
+            <div class="step-title">Detect</div>
+            <div class="step-desc">Ingests batch of at-risk records, scored by risk level</div>
+          </div>
+          <div class="workflow-step step-2">
+            <div class="step-icon">🧠</div>
+            <div class="step-title">Diagnose</div>
+            <div class="step-desc">Root-causes each failure, applies customer tier & age signals</div>
+          </div>
+          <div class="workflow-step step-3">
+            <div class="step-icon">⚡</div>
+            <div class="step-title">Intervene</div>
+            <div class="step-desc">Selects right workflow: retry, dunning, chaser, or mandate</div>
+          </div>
+          <div class="workflow-step step-4">
+            <div class="step-icon">🛑</div>
+            <div class="step-title">Stop Rules</div>
+            <div class="step-desc">DNC compliance, max retries, low-ROI thresholds enforced</div>
+          </div>
+          <div class="workflow-step step-5">
+            <div class="step-icon">✅</div>
+            <div class="step-title">Measure</div>
+            <div class="step-desc">Full audit trail, recovery rate, escalation count tracked</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /tab-dashboard -->
+
+    <!-- ═══════ RECORDS TAB ═══════ -->
+    <div class="tab-content" id="tab-records">
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1>At-Risk Records</h1>
+          <p>Live view of all records being processed by the recovery agent</p>
+        </div>
+        <button class="btn btn-primary" onclick="runBatch()">▶ Run New Batch</button>
+      </div>
+
+      <div class="records-controls">
+        <button class="filter-btn active" data-filter="all" onclick="filterRecords('all')">All</button>
+        <button class="filter-btn" data-filter="pending" onclick="filterRecords('pending')">Pending</button>
+        <button class="filter-btn" data-filter="in_progress" onclick="filterRecords('in_progress')">In Progress</button>
+        <button class="filter-btn" data-filter="recovered" onclick="filterRecords('recovered')">Recovered</button>
+        <button class="filter-btn" data-filter="failed" onclick="filterRecords('failed')">Failed</button>
+        <button class="filter-btn" data-filter="escalated" onclick="filterRecords('escalated')">Escalated</button>
+        <button class="filter-btn" data-filter="dnc" onclick="filterRecords('dnc')">DNC</button>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Record ID</th>
+              <th>Customer</th>
+              <th>Failure Type</th>
+              <th>Amount</th>
+              <th>Risk</th>
+              <th>Status</th>
+              <th style="text-align:center">Attempts</th>
+              <th>Last Action</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="records-tbody">
+            <tr>
+              <td colspan="9" style="text-align:center;padding:32px;color:var(--text-muted)">
+                Click "Run Batch" to load records
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div><!-- /tab-records -->
+
+    <!-- ═══════ AUDIT TAB ═══════ -->
+    <div class="tab-content" id="tab-audit">
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1>Audit Trail</h1>
+          <p>Every agent action logged with decision rationale, channel, and outcome</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-outline" onclick="exportAudit('csv')">⬇ Export CSV</button>
+          <button class="btn btn-outline" onclick="exportAudit('json')">⬇ Export JSON</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Record ID</th>
+              <th>Customer</th>
+              <th>Action Taken</th>
+              <th>Channel</th>
+              <th>Outcome</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody id="audit-tbody">
+            <tr>
+              <td colspan="7" style="text-align:center;padding:32px;color:var(--text-muted)">
+                Run a batch to see audit entries
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div><!-- /tab-audit -->
+
+  </main><!-- /main-content -->
+</div><!-- /app-wrapper -->
+
+<!-- ── Record Detail Modal ─────────────────────────────────────────────────── -->
+<div class="modal-overlay" id="detail-modal" onclick="if(event.target===this) closeModal()">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 id="modal-title">Record Detail</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<!-- ── Completion Toast ────────────────────────────────────────────────────── -->
+<div class="completion-toast" id="completion-toast">
+  <div class="toast-header">
+    <span class="toast-title">🎉 Batch Recovery Complete!</span>
+    <button class="toast-close" onclick="closeToast()">✕</button>
+  </div>
+  <div class="toast-stats">
+    <div class="toast-stat">
+      <div class="toast-stat-val" id="toast-recovered">—</div>
+      <div class="toast-stat-label">Recovered</div>
+    </div>
+    <div class="toast-stat">
+      <div class="toast-stat-val" id="toast-rate">—</div>
+      <div class="toast-stat-label">Rate</div>
+    </div>
+    <div class="toast-stat">
+      <div class="toast-stat-val" id="toast-records">—</div>
+      <div class="toast-stat-label">Records</div>
+    </div>
+  </div>
+</div>
+
+<!-- Tab switching also updates sidebar active state -->
+<script>
+  // Intercept switchTab to also update sidebar nav items
+  const _origSwitch = window.switchTab;
+  window.switchTab = function(tab) {
+    document.querySelectorAll('.nav-item[data-tab]').forEach(n => n.classList.toggle('active', n.dataset.tab === tab));
+    if (_origSwitch) _origSwitch(tab);
+  };
+</script>
+
+<!-- App Module -->
+<script type="module" src="js/app.js"></script>
+
+</body>
+</html>
